@@ -1,0 +1,7 @@
+EEMidiBot/bin/*
+*.exe
+*.pdb
+*.o
+*.obj
+*.mdb
+
