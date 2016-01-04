@@ -383,7 +383,7 @@ namespace EEMidiBot
 							}
 						} else {
 							//C3 is note 36 in MIDI, and note 0 in EE
-							con.Send (WorldKey, 0, x, y, 77, note - 36);
+							con.Send (WorldKey, 0, x, y, 77, note - 48);
 							System.Threading.Thread.Sleep (100);
 						}
 					}
@@ -495,6 +495,7 @@ namespace EEMidiBot
 				}
 				Console.Write ("\r");
 				System.Threading.Thread.Sleep (250);
+				dots = (dots + 1) % 4;
 			}
 			Console.Write ("\n");
 			Console.WriteLine ("Connected to room");
