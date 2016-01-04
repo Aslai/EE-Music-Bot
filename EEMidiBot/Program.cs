@@ -361,11 +361,11 @@ namespace EEMidiBot
 															//If the note volume is 88 or higher, emit two notes.
 						//e.Time is in ticks, tempo is in microseconds per tick.
 						//e.Time * tempo / m.TicksPerQuarter = the event time in microseconds.
-						//Divide that by how long each block should represent (I use 1/90th of a second)
-						if (e.Time * tempo / m.TicksPerQuarter / (1000000L / 90L) <= offset) {
+						//Divide that by how long each block should represent (I use 1/95th of a second)
+						if (e.Time * tempo / m.TicksPerQuarter / (1000000L / 95L) <= offset) {
 							offset++;
 						} else {
-							offset = e.Time * tempo / m.TicksPerQuarter / (1000000L / 90L);
+							offset = e.Time * tempo / m.TicksPerQuarter / (1000000L / 95L);
 						}
 
 						//Calculate the X/Y coordinates based on time. This does NOT account for time spent in portals.
