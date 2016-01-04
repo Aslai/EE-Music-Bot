@@ -382,7 +382,7 @@ namespace EEMidiBot
 								break;
 							}
 						} else {
-							//C3 is note 36 in MIDI, and note 0 in EE
+							//C3 is note 48 in MIDI, and note 0 in EE
 							con.Send (WorldKey, 0, x, y, 77, note - 48);
 							System.Threading.Thread.Sleep (100);
 						}
