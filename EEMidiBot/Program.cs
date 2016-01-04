@@ -178,7 +178,7 @@ namespace EEMidiBot
 					}
 					status = priorStatus;
 				} else {
-					if ((status >> 4) < 12 || (status >> 4) > 14) {
+					if ((status >> 4) < 12 || (status >> 4) == 14 || (status == 0xFF)) {
 						bytes = 2;
 					} else {
 						bytes = 1;
@@ -194,15 +194,17 @@ namespace EEMidiBot
 					priorStatus = 0;
 				}
 				byte[] edata = null;
-				if (status == 0xFF) {
-					if (offset + arg2 <= data.Length) {
+				if ((status >> 4) == 0xF) {
+					offset--;
+					int len = ReadDuration (ref data, ref offset);
+					if (offset + len <= data.Length) {
 						//Extract substring of bytes
-						edata = new byte[arg2];
-						for (int i = 0; i < arg2; ++i) {
+						edata = new byte[len];
+						for (int i = 0; i < len; ++i) {
 							edata [i] = data [offset++];
 						}
 					}
-				}
+				} 
 				output.PushEvent (length, status, arg1, arg2, edata);
 			}
 			MyTracks.Add (output);
@@ -333,10 +335,12 @@ namespace EEMidiBot
 			11, 10, 8, 10, 17, 17, 19, 9, 18,
 			19, 16, 1, 18, 10, 11, 10, 10, 11,
 			10, 11, 19, 19, 9, 9, 10, 10, 10,
-			10, 19, 19, 19, 19, 19, 6, 17
+			10, 19, 19, 19, 19, 19, 6, 17, 17, 17, 17
 		};
 
 		private static void Write(PlayerIOClient.Connection con, Midi m){
+			con.Send ("clear");
+			System.Threading.Thread.Sleep (100);
 			long x = 1;
 			long y = 2;
 			long offset = 0;
@@ -345,6 +349,11 @@ namespace EEMidiBot
 			long xprev = 1;
 			long tempo = 60000000 / 120; //Default microseconds per beat (120 bpm)
 			while (true) {
+				if (Console.KeyAvailable) {
+					if (Console.ReadKey ().KeyChar == 'q') {
+						break;
+					}
+				}
 				Midi.Event e = m.NextEvent ();
 				if (!e.Valid) {
 					break;
@@ -361,11 +370,11 @@ namespace EEMidiBot
 															//If the note volume is 88 or higher, emit two notes.
 						//e.Time is in ticks, tempo is in microseconds per tick.
 						//e.Time * tempo / m.TicksPerQuarter = the event time in microseconds.
-						//Divide that by how long each block should represent (I use 1/95th of a second)
-						if (e.Time * tempo / m.TicksPerQuarter / (1000000L / 95L) <= offset) {
+						//Divide that by how long each block should represent (I use 1/85th of a second)
+						if (e.Time * tempo / m.TicksPerQuarter / (1000000L / 85L) <= offset) {
 							offset++;
 						} else {
-							offset = e.Time * tempo / m.TicksPerQuarter / (1000000L / 95L);
+							offset = e.Time * tempo / m.TicksPerQuarter / (1000000L / 85L);
 						}
 
 						//Calculate the X/Y coordinates based on time. This does NOT account for time spent in portals.
@@ -378,13 +387,13 @@ namespace EEMidiBot
 							//Deal with drums
 							if (note >= 35 && note <= 81) {
 								con.Send (WorldKey, 0, x, y, 83, percussion[note - 35]);
-								System.Threading.Thread.Sleep (100);
+								System.Threading.Thread.Sleep (30);
 								break;
 							}
 						} else {
 							//C3 is note 48 in MIDI, and note 0 in EE
 							con.Send (WorldKey, 0, x, y, 77, note - 48);
-							System.Threading.Thread.Sleep (100);
+							System.Threading.Thread.Sleep (30);
 						}
 					}
 				}
@@ -393,9 +402,9 @@ namespace EEMidiBot
 					for (long i = xprev; i < x; ++i) {
 						//Add in portals to the slack space
 						con.Send (WorldKey, 0, i, 2, 242, 1, id, id - 1);
-						System.Threading.Thread.Sleep (100);
+						System.Threading.Thread.Sleep (30);
 						con.Send (WorldKey, 0, i, WorldHeight - 3, 242, 1, id + 1, id + 2);
-						System.Threading.Thread.Sleep (100);
+						System.Threading.Thread.Sleep (30);
 						id += 2;
 					}
 				}
@@ -404,7 +413,7 @@ namespace EEMidiBot
 
 			//Fill in the last column of portals
 			con.Send (WorldKey, 0, x, 2, 242, 1, id, id - 1);
-			System.Threading.Thread.Sleep (100);
+			System.Threading.Thread.Sleep (30);
 			con.Send (WorldKey, 0, x, WorldHeight - 3, 242, 1, id + 1, 1);
 		}
 
@@ -480,6 +489,11 @@ namespace EEMidiBot
 				System.Console.WriteLine (e.Message);
 				return;
 			}
+			while (Console.KeyAvailable) {
+				Console.ReadKey ();
+			}
+			Console.WriteLine ("Press any key to continue");
+			Console.ReadKey ();
 		}
 
 		private static void HandleConnection(PlayerIOClient.Connection con){
@@ -507,15 +521,19 @@ namespace EEMidiBot
 				string[] cmds = cmd.Split (' ');
 				switch (cmds [0]) {
 					case "midi":
-						m = new Midi ();
-						if (!m.Read (cmd.Substring(5))) {
-							Console.WriteLine ("Failed to load file. Reason:");
-							Console.WriteLine (m.LastError);
+						try{
+							m = new Midi ();
+							if (!m.Read (cmd.Substring(5))) {
+								Console.WriteLine ("Failed to load file. Reason:");
+								Console.WriteLine (m.LastError);
+							}
+						} catch( Exception e ){
+							Console.WriteLine (e.Message);
 						}
 						Console.WriteLine ("Successfully loaded.");
 					break;
 					case "write":
-						Console.WriteLine ("Writing to world (This will take a while...)");
+						Console.WriteLine ("Writing to world (This will take a while...)\nPress q to abort.");
 						m.Rewind ();
 						Write (con, m);
 						Console.WriteLine ("Done!");
