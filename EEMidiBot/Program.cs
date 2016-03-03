@@ -232,7 +232,7 @@ namespace EEMidiBot
 			} 
 			fname = fname.Trim('\'', '"');
 			if (fname.Substring (0, 7) == "file://") {
-				fname = System.Net.WebUtility.UrlDecode(fname.Substring (7));
+				fname = System.Web.HttpUtility.UrlDecode(fname.Substring (7));
 			}
 			if (fname.Substring (0, 7) == "http://") {
 				System.Net.WebClient client = new System.Net.WebClient();
@@ -336,24 +336,6 @@ namespace EEMidiBot
 	}
 	class MainClass
 	{
-		//Convert the world key to something usable
-		static string derot(string worldkey)
-		{
-			string newKey = "";
-			foreach( char C in worldkey ){
-				int c = C;
-				if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M')) {
-					c += 13;
-				}
-				else if ((c > 'm' && c <= 'z') || (c > 'M' && c <= 'Z')) {
-					c -= 13;
-				}
-				newKey += (char)c;
-			}
-			return newKey;
-		}
-
-		private static string WorldKey = "";
 		//private static int WorldWidth = 0;
 		private static int WorldHeight = 0;
 
@@ -376,7 +358,6 @@ namespace EEMidiBot
 			switch (m.Type) {
 			case "init":
 				{
-					WorldKey = derot (m.GetString (5));
 					//WorldWidth = m.GetInt (18);
 					WorldHeight = m.GetInt (19);
 					
@@ -487,13 +468,13 @@ namespace EEMidiBot
 							if ((e.Status & 0xF) == 9) {
 								//Deal with drums
 								if (note >= 35 && note <= 81) {
-									con.Send (WorldKey, 0, x, y, 83, percussion [note - 35]);
+									con.Send ("b",0, x, y, 83, percussion [note - 35]);
 									System.Threading.Thread.Sleep (30);
 									break;
 								}
 							} else {
 								//C3 is note 48 in MIDI, and note 0 in EE
-								con.Send (WorldKey, 0, x, y, 77, note - 48);
+								con.Send ("b",0, x, y, 77, note - 48);
 								System.Threading.Thread.Sleep (30);
 							}
 						}
@@ -503,9 +484,9 @@ namespace EEMidiBot
 				if (x > xprev) {
 					for (long i = xprev; i < x; ++i) {
 						//Add in portals to the slack space
-						con.Send (WorldKey, 0, i, 2, 242, 1, id, id - 1);
+						con.Send ("b",0, i, 2, 242, 1, id, id - 1);
 						System.Threading.Thread.Sleep (30);
-						con.Send (WorldKey, 0, i, WorldHeight - 3, 242, 1, id + 1, id + 2);
+						con.Send ("b",0, i, WorldHeight - 3, 242, 1, id + 1, id + 2);
 						System.Threading.Thread.Sleep (30);
 						id += 2;
 					}
@@ -513,9 +494,9 @@ namespace EEMidiBot
 				xprev = x;
 			}
 			//Fill in the last column of portals
-			con.Send (WorldKey, 0, x, 2, 242, 1, id, id - 1);
+			con.Send ("b",0, x, 2, 242, 1, id, id - 1);
 			System.Threading.Thread.Sleep (30);
-			con.Send (WorldKey, 0, x, WorldHeight - 3, 242, 1, id + 1, 3);
+			con.Send ("b",0, x, WorldHeight - 3, 242, 1, id + 1, 3);
 			stop = 0;
 		}
 
@@ -605,7 +586,7 @@ namespace EEMidiBot
 			con.Send ("init2");
 
 			int dots = 0;
-			while (WorldKey == "") {
+			while (WorldHeight == 0) {
 				Console.Write ("Connecting");
 				for (int i = 0; i < dots; ++i) {
 					Console.Write (".");
@@ -650,7 +631,7 @@ namespace EEMidiBot
 					foreach (string s in cmds) {
 						try {
 							chans [Convert.ToInt16 (s)] = false;
-						} catch (Exception e) {
+						} catch {
 
 						}
 					}
@@ -659,7 +640,7 @@ namespace EEMidiBot
 					foreach (string s in cmds) {
 						try {
 							chans [Convert.ToInt16 (s)] = true;
-						} catch (Exception e) {
+						} catch {
 
 						}
 					}
