@@ -232,7 +232,7 @@ namespace EEMidiBot
 			} 
 			fname = fname.Trim('\'', '"');
 			if (fname.Substring (0, 7) == "file://") {
-				fname = System.Web.HttpUtility.UrlDecode(fname.Substring (7));
+				fname = System.Net.WebUtility.UrlDecode(fname.Substring (7));
 			}
 			if (fname.Substring (0, 7) == "http://") {
 				System.Net.WebClient client = new System.Net.WebClient();
