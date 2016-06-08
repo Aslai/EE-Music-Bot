@@ -469,13 +469,13 @@ namespace EEMidiBot
 								//Deal with drums
 								if (note >= 35 && note <= 81) {
 									con.Send ("b",0, x, y, 83, percussion [note - 35]);
-									System.Threading.Thread.Sleep (30);
+									System.Threading.Thread.Sleep (BLOCK_DELAY);
 									break;
 								}
 							} else {
 								//C3 is note 48 in MIDI, and note 0 in EE
 								con.Send ("b",0, x, y, 77, note - 48);
-								System.Threading.Thread.Sleep (30);
+								System.Threading.Thread.Sleep (BLOCK_DELAY);
 							}
 						}
 					}
@@ -485,9 +485,9 @@ namespace EEMidiBot
 					for (long i = xprev; i < x; ++i) {
 						//Add in portals to the slack space
 						con.Send ("b",0, i, 2, 242, 1, id, id - 1);
-						System.Threading.Thread.Sleep (30);
+						System.Threading.Thread.Sleep (BLOCK_DELAY);
 						con.Send ("b",0, i, WorldHeight - 3, 242, 1, id + 1, id + 2);
-						System.Threading.Thread.Sleep (30);
+						System.Threading.Thread.Sleep (BLOCK_DELAY);
 						id += 2;
 					}
 				}
@@ -495,7 +495,7 @@ namespace EEMidiBot
 			}
 			//Fill in the last column of portals
 			con.Send ("b",0, x, 2, 242, 1, id, id - 1);
-			System.Threading.Thread.Sleep (30);
+			System.Threading.Thread.Sleep (BLOCK_DELAY);
 			con.Send ("b",0, x, WorldHeight - 3, 242, 1, id + 1, 3);
 			stop = 0;
 		}
@@ -533,7 +533,9 @@ namespace EEMidiBot
 			return client;
 		}
 		private static PlayerIOClient.Connection MyConnection = null;
-		public static void Main (string[] args)
+        private static readonly int BLOCK_DELAY = 30;
+
+        public static void Main (string[] args)
 		{
 
 			try {
